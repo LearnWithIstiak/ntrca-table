@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Applicant Data Table</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        select, input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+            transition: all 0.2s;
+            min-width: 180px;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: #5b9bd5;
+            box-shadow: 0 0 5px rgba(91, 155, 213, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f4f8;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        tr.fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                margin-bottom: 15px;
+                background-color: white;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                padding: 10px;
+            }
+
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                font-size: 14px;
+            }
+
+            td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                font-weight: bold;
+                color: #555;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center; margin-bottom: 5px; font-size: 26px; color: #2a4d69;">
+    ❤️ Istiak and Sumaiya ❤️
+</h1>
+
+    <h2>Applicant Data</h2>
+
+    <div class="controls">
+        <select id="batchFilter">
+            <option value="All">All Batches</option>
+            <script>
+                for (let i = 1; i <= 18; i++) {
+                    document.write(`<option value="${i}">${i}th Batch</option>`);
+                }
+            </script>
+        </select>
+
+        <input type="text" id="searchInput" placeholder="Search any column...">
+    </div>
+
+    <table id="applicantTable">
+        <thead>
+            <tr>
+                <th>SL</th>
+                <th>Applicant Name</th>
+                <th>Batch</th>
+                <th>Roll</th>
+                <th>Marks</th>
+                <th>Rank</th>
+                <th>Subject</th>
+                <th>Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dynamic rows -->
+        </tbody>
+    </table>
+
+    <script>
+        let fullData = [];
+
+        const renderTable = (data) => {
+            const tbody = document.querySelector('#applicantTable tbody');
+            tbody.innerHTML = ''; // Clear previous
+
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.classList.add('fade-in');
+
+                tr.innerHTML = `
+                    <td data-label="SL">${index + 1}</td>
+                    <td data-label="Applicant Name">${row.applicant_name.replace(/\n/g, ' ')}</td>
+                    <td data-label="Batch">${row.batch}</td>
+                    <td data-label="Roll">${row.roll}</td>
+                    <td data-label="Marks">${row.marks}</td>
+                    <td data-label="Rank">${row.rank}</td>
+                    <td data-label="Subject">${row.subject}</td>
+                    <td data-label="Level">${row.level.replace(/\\\//g, '/')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        const applyFilters = () => {
+            const batchVal = document.getElementById('batchFilter').value;
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = fullData;
+
+            if (batchVal !== 'All') {
+                filtered = filtered.filter(row => {
+                    const batchNum = row.batch.match(/\d+/);
+                    return batchNum && batchNum[0] === batchVal;
+                });
+            }
+
+            if (searchVal.trim() !== '') {
+                filtered = filtered.filter(row =>
+                    Object.values(row).some(val =>
+                        String(val).toLowerCase().includes(searchVal)
+                    )
+                );
+            }
+
+            renderTable(filtered);
+        };
+
+        fetch('data.json')
+            .then(res => res.json())
+            .then(json => {
+                fullData = json.data;
+                renderTable(fullData);
+                document.getElementById('batchFilter').addEventListener('change', applyFilters);
+                document.getElementById('searchInput').addEventListener('input', applyFilters);
+            })
+            .catch(err => {
+                console.error('Error loading JSON:', err);
+            });
+    </script>
+
+</body>
+</html>
