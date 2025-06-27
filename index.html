@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Applicant Data Table</title>
+    <meta name="viewport" content="width=1024"> <!-- Force desktop layout -->
+    <style>
+        body {
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 28px;
+            color: #2a4d69;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        select, input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+            min-width: 180px;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: #5b9bd5;
+            box-shadow: 0 0 5px rgba(91, 155, 213, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f4f8;
+            font-weight: 600;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f5f8fb;
+        }
+
+        tr:hover {
+            background-color: #e6f2ff;
+        }
+
+        tr.fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center; margin-bottom: 5px; font-size: 28px; color: #2a4d69;">
+    <span style="font-size: 30px; margin-right: 8px;">❤️</span>
+    Istiak and Sumaiya
+    <span style="font-size: 30px; margin-left: 8px;">❤️</span>
+</h1>
+
+    <h2>Applicant Data</h2>
+
+    <div class="controls">
+        <select id="batchFilter">
+            <option value="All">All Batches</option>
+            <script>
+                for (let i = 1; i <= 18; i++) {
+                    document.write(`<option value="${i}">${i}th Batch</option>`);
+                }
+            </script>
+        </select>
+
+        <input type="text" id="searchInput" placeholder="Search any column...">
+    </div>
+
+    <table id="applicantTable">
+        <thead>
+            <tr>
+                <th>SL</th>
+                <th>Applicant Name</th>
+                <th>Batch</th>
+                <th>Roll</th>
+                <th>Marks</th>
+                <th>Rank</th>
+                <th>Subject</th>
+                <th>Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dynamic rows will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        let fullData = [];
+
+        function renderTable(data) {
+            const tbody = document.querySelector('#applicantTable tbody');
+            tbody.innerHTML = ''; // Clear old rows
+
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.classList.add('fade-in');
+
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${row.applicant_name.replace(/\n/g, ' ')}</td>
+                    <td>${row.batch}</td>
+                    <td>${row.roll}</td>
+                    <td>${row.marks}</td>
+                    <td>${row.rank}</td>
+                    <td>${row.subject}</td>
+                    <td>${row.level.replace(/\\\//g, '/')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function applyFilters() {
+            const batchVal = document.getElementById('batchFilter').value;
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = fullData;
+
+            // Filter by batch
+            if (batchVal !== 'All') {
+                filtered = filtered.filter(row => {
+                    const match = row.batch.match(/\d+/);
+                    return match && match[0] === batchVal;
+                });
+            }
+
+            // Filter by search
+            if (searchVal.trim() !== '') {
+                filtered = filtered.filter(row =>
+                    Object.values(row).some(val =>
+                        String(val).toLowerCase().includes(searchVal)
+                    )
+                );
+            }
+
+            renderTable(filtered);
+        }
+
+        // Load JSON and set up event listeners
+        fetch('data.json')
+            .then(response => response.json())
+            .then(json => {
+                fullData = json.data;
+                renderTable(fullData);
+
+                document.getElementById('batchFilter').addEventListener('change', applyFilters);
+                document.getElementById('searchInput').addEventListener('input', applyFilters);
+            })
+            .catch(error => {
+                console.error('Error loading JSON:', error);
+            });
+    </script>
+
+</body>
+</html>
