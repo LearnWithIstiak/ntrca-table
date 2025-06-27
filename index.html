@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JSON Table (Filter + Search)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        select, input[type="text"] {
+            padding: 6px 10px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Applicant Data</h2>
+
+    <div class="controls">
+        <label for="batchFilter">Batch:</label>
+        <select id="batchFilter">
+            <option value="All">All Batches</option>
+            <script>
+                for (let i = 1; i <= 18; i++) {
+                    document.write(`<option value="${i}">${i}th Batch</option>`);
+                }
+            </script>
+        </select>
+
+        <label for="searchInput">Search:</label>
+        <input type="text" id="searchInput" placeholder="Search any column...">
+    </div>
+
+    <table id="applicantTable">
+        <thead>
+            <tr>
+                <th>SL</th>
+                <th>Applicant Name</th>
+                <th>Batch</th>
+                <th>Roll</th>
+                <th>Marks</th>
+                <th>Rank</th>
+                <th>Subject</th>
+                <th>Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Table rows will be injected here -->
+        </tbody>
+    </table>
+
+    <script>
+        let fullData = [];
+
+        function renderTable(data) {
+            const tbody = document.querySelector('#applicantTable tbody');
+            tbody.innerHTML = ''; // Clear existing rows
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${row.applicant_name.replace(/\n/g, ' ')}</td>
+                    <td>${row.batch}</td>
+                    <td>${row.roll}</td>
+                    <td>${row.marks}</td>
+                    <td>${row.rank}</td>
+                    <td>${row.subject}</td>
+                    <td>${row.level.replace(/\\\//g, '/')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function applyFilters() {
+            const batchValue = document.getElementById('batchFilter').value;
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = fullData;
+
+            // Batch filter
+            if (batchValue !== 'All') {
+                filtered = filtered.filter(row => {
+                    const batchNum = row.batch.match(/\d+/);
+                    return batchNum && batchNum[0] === batchValue;
+                });
+            }
+
+            // Search filter
+            if (searchValue.trim() !== '') {
+                filtered = filtered.filter(row =>
+                    Object.values(row).some(val =>
+                        String(val).toLowerCase().includes(searchValue)
+                    )
+                );
+            }
+
+            renderTable(filtered);
+        }
+
+        // Load data
+        fetch('data.json')
+            .then(response => response.json())
+            .then(json => {
+                fullData = json.data;
+                renderTable(fullData);
+
+                // Add event listeners
+                document.getElementById('batchFilter').addEventListener('change', applyFilters);
+                document.getElementById('searchInput').addEventListener('input', applyFilters);
+            })
+            .catch(error => {
+                console.error('Error loading JSON:', error);
+            });
+    </script>
+</body>
+</html>
